@@ -106,3 +106,34 @@ END obtem_aumento_salarios;
 SELECT obtem_aumento_salarios(20) FROM dual;
 
 --6
+CREATE OR REPLACE FUNCTION listar_funcionarios RETURN CLOB
+IS
+    CURSOR c_func IS
+        SELECT f.first_name || ' ' || f.last_name AS nome_funcionario,
+               TO_CHAR(f.hire_date, 'DD/MM/YYYY') AS hire_date,
+               f.phone_number, f.email,
+               NVL(m.first_name || ' ' || m.last_name, 'Sem gerente') AS nome_gerente,
+               NVL(d.department_name, 'Sem departamento') AS departamento,
+               f.salary, NVL(f.commission_pct, 0) AS comissao
+        FROM HR.employees f
+        LEFT JOIN HR.employees m ON f.manager_id = m.employee_id
+        LEFT JOIN HR.departments d ON f.department_id = d.department_id;
+
+    v_resultado CLOB := '';
+BEGIN
+    FOR rec IN c_func LOOP
+        v_resultado := v_resultado || 'Funcionário: ' || rec.nome_funcionario || CHR(10) ||
+            'Data de Contratação: ' || rec.hire_date || CHR(10) ||
+            'Telefone: ' || rec.phone_number || CHR(10) ||
+            'Email: ' || rec.email || CHR(10) ||
+            'Gerente: ' || rec.nome_gerente || CHR(10) ||
+            'Departamento: ' || rec.departamento || CHR(10) ||
+            'Salário: ' || TO_CHAR(rec.salary, 'FM999G999D00') || CHR(10) ||
+            'Comissão: ' || TO_CHAR(rec.comissao, 'FM999G990D00') || CHR(10) ||
+            '---------------------------' || CHR(10);
+    END LOOP;
+
+    RETURN v_resultado;
+END;
+
+SELECT listar_funcionarios() FROM dual;
